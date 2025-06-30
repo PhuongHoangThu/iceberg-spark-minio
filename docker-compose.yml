@@ -1,0 +1,82 @@
+version: '3.8'
+services: 
+  minio:
+    image: minio/minio
+    container_name: minio_local_app
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: Admin1234
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+  
+  spark-master:
+    image: bitnami/spark:latest
+    container_name: spark_local_app
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+    environment:
+      - SPARK_MODE=master
+      - SPARK_MASTER_HOST=spark_local_app
+    volumes:
+      - ./spark:/opt/spark/conf
+      - ./notebooks:/opt/apps
+
+  spark-worker:
+    image: bitnami/spark:latest
+    container_name: spark_worker_local_app
+    depends_on:
+      - spark-master
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark_master_local_app:7077
+    volumes:
+      - ./spark:/opt/spark/conf
+      - ./notebooks:/opt/apps
+  hive-metastore-db:
+    image: postgres
+    container_name: hive-metastore-db
+    environment:
+      - POSTGRES_USER=hive
+      - POSTGRES_PASSWORD=hive
+      - POSTGRES_DB=metastore
+    ports:
+      - "5432:5432"
+    volumes:
+      - metastore_data:/var/lib/postgresql/data
+
+  hive-metastore:
+    image: bitsondatadev/hive-metastore
+    container_name: hive-metastore
+    ports:
+      - "9083:9083"
+    environment:
+      - METASTORE_DB_TYPE=postgres
+      - CONNECTION_URL=jdbc:postgresql://hive-metastore-db:5432/metastore
+      - DRIVER=org.postgresql.Driver
+      - USERNAME=hive
+      - PASSWORD=hive
+    depends_on:
+      - hive-metastore-db
+  
+  hive-server:
+    image: bde2020/hive:2.3.2-postgresql-metastore
+    container_name: hive-server
+    ports:
+      - "10000:10000"  # HiveServer2 (JDBC)
+      - "10002:10002"  # optional for beeline CLI
+    environment:
+      - HIVE_METASTORE_URI=thrift://hive-metastore:9083
+      - SERVICE_NAME=hiveserver2
+    depends_on:
+      - hive-metastore
+volumes:
+  minio_data:
+  metastore_data:
+    
+
+  
