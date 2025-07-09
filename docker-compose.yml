@@ -33,7 +33,7 @@ services:
       - spark-master
     environment:
       - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://spark_master_local_app:7077
+      - SPARK_MASTER_URL=spark://spark_local_app:7077
     volumes:
       - ./spark:/opt/spark/conf
       - ./notebooks:/opt/apps
@@ -55,11 +55,12 @@ services:
     ports:
       - "9083:9083"
     environment:
-      - METASTORE_DB_TYPE=postgres
-      - CONNECTION_URL=jdbc:postgresql://hive-metastore-db:5432/metastore
-      - DRIVER=org.postgresql.Driver
-      - USERNAME=hive
-      - PASSWORD=hive
+      - METASTORE_DB_HOSTNAME=hive-metastore-db
+      - METASTORE_TYPE=postgres
+      - METASTORE_DB_PORT=5432
+      - POSTGRES_USER=hive
+      - POSTGRES_PASSWORD=hive
+      - POSTGRES_DB=metastore
     depends_on:
       - hive-metastore-db
   
