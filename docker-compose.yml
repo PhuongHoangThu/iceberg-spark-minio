@@ -67,16 +67,41 @@ services:
     image: bde2020/hive:2.3.2-postgresql-metastore
     container_name: hive-server
     ports:
-      - "10000:10000"  # HiveServer2 (JDBC)
-      - "10002:10002"  # optional for beeline CLI
+      - "10000:10000" 
+      - "10002:10002"
     environment:
       - HIVE_METASTORE_URI=thrift://hive-metastore:9083
       - SERVICE_NAME=hiveserver2
+    volumes:
+      - ./core-site.xml:/opt/hadoop-2.7.4/etc/hadoop/core-site.xml
     depends_on:
       - hive-metastore
+      - hdfs_namenode
+  hdfs_namenode:
+    image: bde2020/hadoop-namenode
+    container_name: hdfs_namenode
+    ports:
+      - "50070:50070"
+      - "8020:8020"
+    environment:
+      - CLUSTER_NAME=hadoop-cluster
+    volumes:
+      - namenode_data:/hadoop/dfs/name
+  hdfs_datanode:
+    image: bde2020/hadoop-datanode
+    container_name: hdfs_datanode
+    depends_on:
+      - hdfs_namenode
+    environment:
+      - CLUSTER_NAME=hadoop-cluster
+    volumes:
+      - datanode_data:/hadoop/dfs/data
+
 volumes:
   minio_data:
   metastore_data:
+  namenode_data:
+  datanode_data:
     
 
   
