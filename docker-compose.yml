@@ -81,6 +81,7 @@
         - "8888:8888"
       volumes:
         - jupyter_data:/home/jovyan
+        - ./jars:/opt/spark/jars
       networks:
         - spark-net
 
